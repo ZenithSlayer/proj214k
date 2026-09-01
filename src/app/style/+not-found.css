@@ -1,0 +1,9 @@
+.error {
+    margin: auto;
+    width: fit-content;
+    text-align: center;
+
+    img {
+        border-radius: 10px;
+    }
+}

@@ -1,0 +1,32 @@
+.search-container {
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.tag-search {
+  padding: 20px;
+  background-color: #1e293b;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+
+  button {
+    padding: 10px;
+    border: 2px solid;
+    border-radius: 10px;
+    height: fit-content;
+    border: 0;
+    flex: 0;
+    background-color: #334155;
+    border: 2px solid #334155;
+    color: white;
+  }
+  
+  button.active {
+    border: 2px solid red;
+  }
+}

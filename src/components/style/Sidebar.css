@@ -1,0 +1,61 @@
+.sidebar {
+  background: #0f172a;
+  color: #fff;
+  padding-top: 20px;
+  transition: width 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.link {
+  all: unset;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  color: #fff;
+  text-decoration: none;
+}
+
+.link.active {
+  background: #334155;
+}
+
+.link.open {
+  justify-content: flex-start;
+}
+
+.link.closed {
+  justify-content: center;
+}
+
+.link span {
+  margin-left: 10px;
+}
+
+.auth-logout-button {
+  all: unset;
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  color: #fff;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.auth-logout-button:hover {
+  background: #334155;
+}
+
+.auth-logout-button.logout:hover {
+  color: #ef4444;
+}
+
+.auth-logout-button.auth:hover {
+  color: #38bdf8;
+}
+
+.auth-logout-button span {
+  margin-left: 20px;
+}

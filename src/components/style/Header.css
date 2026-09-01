@@ -1,0 +1,21 @@
+.header {
+  height: 100px;
+  background: #1e293b;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  justify-content: space-between;
+}
+
+.menu-button {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 30px;
+  cursor: pointer;
+}
+
+.logo {
+  height: 80%;
+}
