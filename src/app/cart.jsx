@@ -1,9 +1,11 @@
-import React from "react";
-import { View, Text, Image, Pressable, ScrollView, Alert, Platform } from "react-native";
+import { Alert, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useCart } from "../context/CartContext";
+import { useAppTheme } from "../context/ThemeContext";
+import { cartApi } from "../services/cart";
 
 const cart = () => {
-  const { cart, removeFromCart, updateQuantity } = useCart();
+  const { theme } = useAppTheme();
+  const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
   const safeCart = Array.isArray(cart) ? cart : [];
 
   const total = safeCart.reduce((sum, item) => {
@@ -35,18 +37,8 @@ const cart = () => {
 
   const handleCheckout = async () => {
     try {
-      const response = await fetch("https://214K.local/api/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ items: safeCart, total }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Checkout failed");
-
-      safeCart.forEach((item) => removeFromCart(item.id));
+      await cartApi.checkout(safeCart, total);
+      clearCart();
       notify("Order placed successfully!");
     } catch (err) {
       notify(err.message);
@@ -55,8 +47,8 @@ const cart = () => {
 
   if (safeCart.length === 0) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 20 }}>
-        <Text style={{ fontSize: 22, fontWeight: "600", color: "#6b7280" }}>
+      <View style={[styles.emptyState, { backgroundColor: theme.background }]}>
+        <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
           Your cart is empty
         </Text>
       </View>
@@ -64,9 +56,9 @@ const cart = () => {
   }
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: "#ffffff" }}>
+    <ScrollView style={{ flex: 1, backgroundColor: theme.background }}>
       <View style={{ padding: 16 }}>
-        <Text style={{ fontSize: 28, fontWeight: "bold", marginBottom: 20 }}>Your Cart</Text>
+        <Text style={[styles.title, { color: theme.text }]}>Your Cart</Text>
 
         {safeCart.map((item) => {
           if (!item?.id) return null;
@@ -78,7 +70,8 @@ const cart = () => {
                 flexDirection: "row",
                 padding: 12,
                 borderWidth: 1,
-                borderColor: "#e5e7eb",
+                borderColor: theme.border,
+                backgroundColor: theme.surface,
                 borderRadius: 8,
                 marginBottom: 12,
                 alignItems: "center",
@@ -90,57 +83,69 @@ const cart = () => {
               />
 
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+                <Text style={[styles.itemName, { color: theme.text }]}>
                   {item.name || "Unnamed product"}
                 </Text>
 
-                <Text style={{ fontSize: 14, color: "#059669", marginVertical: 4 }}>
+                <Text style={[styles.price, { color: theme.primary }]}>
                   ${Number(item.price || 0).toFixed(2)}
                 </Text>
 
                 <View style={{ flexDirection: "row", alignItems: "center", marginVertical: 6 }}>
                   <Pressable
                     onPress={() => handleDecrease(item)}
-                    style={{ backgroundColor: "#e5e7eb", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4 }}
+                    style={[styles.quantityButton, { backgroundColor: theme.surfaceAlt }]}
                   >
-                    <Text style={{ fontWeight: "bold" }}>-</Text>
+                    <Text style={{ color: theme.text, fontWeight: "bold" }}>-</Text>
                   </Pressable>
 
-                  <Text style={{ marginHorizontal: 12, fontSize: 16, fontWeight: "600" }}>
+                  <Text style={[styles.quantity, { color: theme.text }]}>
                     {item.quantity || 1}
                   </Text>
 
                   <Pressable
                     onPress={() => handleIncrease(item)}
-                    style={{ backgroundColor: "#e5e7eb", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4 }}
+                    style={[styles.quantityButton, { backgroundColor: theme.surfaceAlt }]}
                   >
-                    <Text style={{ fontWeight: "bold" }}>+</Text>
+                    <Text style={{ color: theme.text, fontWeight: "bold" }}>+</Text>
                   </Pressable>
                 </View>
 
                 <Pressable onPress={() => handleRemove(item)}>
-                  <Text style={{ color: "#dc2626", fontSize: 12, fontWeight: "600" }}>Remove</Text>
+                  <Text style={{ color: theme.accent, fontSize: 12, fontWeight: "600" }}>Remove</Text>
                 </Pressable>
               </View>
             </View>
           );
         })}
 
-        <View style={{ marginTop: 20, paddingTop: 16, borderTopWidth: 1, borderTopColor: "#e5e7eb" }}>
-          <Text style={{ fontSize: 22, fontWeight: "bold", marginBottom: 16 }}>
+        <View style={[styles.total, { borderTopColor: theme.border }]}>
+          <Text style={[styles.totalText, { color: theme.text }]}>
             Total: ${total.toFixed(2)}
           </Text>
 
           <Pressable
             onPress={handleCheckout}
-            style={{ backgroundColor: "#2563eb", padding: 16, borderRadius: 8, alignItems: "center" }}
+            style={{ backgroundColor: theme.primary, padding: 16, borderRadius: 8, alignItems: "center" }}
           >
-            <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: "bold" }}>Checkout</Text>
+            <Text style={{ color: theme.surface, fontSize: 16, fontWeight: "bold" }}>Checkout</Text>
           </Pressable>
         </View>
       </View>
     </ScrollView>
   );
 };
+
+const styles = StyleSheet.create({
+  emptyState: { flex: 1, justifyContent: "center", alignItems: "center", padding: 20 },
+  emptyText: { fontSize: 22, fontWeight: "600" },
+  title: { fontSize: 28, fontWeight: "bold", marginBottom: 20 },
+  itemName: { fontSize: 16, fontWeight: "bold" },
+  price: { fontSize: 14, marginVertical: 4 },
+  quantityButton: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4 },
+  quantity: { marginHorizontal: 12, fontSize: 16, fontWeight: "600" },
+  total: { marginTop: 20, paddingTop: 16, borderTopWidth: 1 },
+  totalText: { fontSize: 22, fontWeight: "bold", marginBottom: 16 },
+});
 
 export default cart;

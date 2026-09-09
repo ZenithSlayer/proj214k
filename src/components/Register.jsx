@@ -1,7 +1,9 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, Pressable } from "react-native";
-import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useAppTheme } from "../context/ThemeContext";
+import { authApi } from "../services/auth";
 
 const isValidEmail = (email) => {
   const basicCheck = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -46,7 +48,8 @@ const isValidCPF = (cpf) => {
   );
 };
 
-const Register = ({ setToast }) => {
+const Register = ({ setToast, stacked = false }) => {
+  const { theme } = useAppTheme();
   const router = useRouter();
 
   const [form, setForm] = useState({
@@ -79,15 +82,7 @@ const Register = ({ setToast }) => {
         cpf: form.cpf.replace(/\D/g, ""),
       };
 
-      const response = await fetch("https://214K.local/api/users/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) throw new Error(data.error || "Register failed");
+      const data = await authApi.register(payload);
 
       if (data.token) {
         await AsyncStorage.setItem("token", data.token);
@@ -101,17 +96,21 @@ const Register = ({ setToast }) => {
   };
 
   return (
-    <View>
-      <Text>Register</Text>
+    <View style={[styles.form, { backgroundColor: theme.surface, borderLeftColor: theme.accent }, stacked && styles.stackedForm]}>
+      <Text style={[styles.heading, { color: theme.text }]}>Register</Text>
 
       <TextInput
         placeholder="Name"
+        placeholderTextColor="#94a3b8"
+        style={[styles.input, { backgroundColor: theme.surfaceAlt, borderColor: theme.border, color: theme.text }]}
         value={form.name}
         onChangeText={(text) => handleChange("name", text)}
       />
 
       <TextInput
         placeholder="Email"
+        placeholderTextColor="#94a3b8"
+        style={[styles.input, { backgroundColor: theme.surfaceAlt, borderColor: theme.border, color: theme.text }]}
         value={form.email}
         onChangeText={(text) => handleChange("email", text)}
         keyboardType="email-address"
@@ -120,6 +119,8 @@ const Register = ({ setToast }) => {
 
       <TextInput
         placeholder="Password"
+        placeholderTextColor="#94a3b8"
+        style={[styles.input, { backgroundColor: theme.surfaceAlt, borderColor: theme.border, color: theme.text }]}
         secureTextEntry
         value={form.password}
         onChangeText={(text) => handleChange("password", text)}
@@ -127,16 +128,27 @@ const Register = ({ setToast }) => {
 
       <TextInput
         placeholder="CPF"
+        placeholderTextColor="#94a3b8"
+        style={[styles.input, { backgroundColor: theme.surfaceAlt, borderColor: theme.border, color: theme.text }]}
         value={form.cpf}
         onChangeText={(text) => handleChange("cpf", text)}
         keyboardType="numeric"
       />
 
-      <Pressable onPress={handleSubmit}>
-        <Text>Register</Text>
+      <Pressable onPress={handleSubmit} style={[styles.button, { backgroundColor: theme.accent }]}>
+        <Text style={[styles.buttonText, { color: theme.surface }]}>Register</Text>
       </Pressable>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  form: { flex: 1, minWidth: 0, justifyContent: "center", gap: 8, backgroundColor: "#1e293b", padding: 24, borderTopRightRadius: 10, borderBottomRightRadius: 10, borderLeftWidth: 4, borderLeftColor: "#ef4444" },
+  stackedForm: { borderLeftWidth: 0, borderTopWidth: 4, borderTopColor: "#ef4444", borderTopRightRadius: 0, borderBottomLeftRadius: 10, borderBottomRightRadius: 10 },
+  heading: { color: "#fff", fontSize: 22, fontWeight: "700", marginBottom: 4 },
+  input: { height: 40, backgroundColor: "#fff", borderRadius: 4, paddingHorizontal: 8, color: "#0f172a" },
+  button: { marginTop: 8, padding: 12, alignItems: "center", backgroundColor: "#ef4444", borderRadius: 8 },
+  buttonText: { color: "#fff", fontWeight: "700" },
+});
 
 export default Register;

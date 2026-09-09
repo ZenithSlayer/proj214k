@@ -1,10 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, Image, ScrollView, Pressable, ActivityIndicator } from "react-native";
-import { productsApi } from "../services/products";
-import ItemRow from "../components/ItemRow";
+import { useNavigation } from "expo-router";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from "react-native";
 import placeHolder from "../assets/placeHolder.png";
+import ItemRow from "../components/ItemRow";
+import { useAppTheme } from "../context/ThemeContext";
+import { productsApi } from "../services/products";
 
 const product = ({ id, onAddToCart, setToast }) => {
+  const navigation = useNavigation();
+  const { theme } = useAppTheme();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -17,6 +21,7 @@ const product = ({ id, onAddToCart, setToast }) => {
       try {
         const data = await productsApi.getById(id);
         setProduct(data);
+        navigation.setOptions({ title: data.name || "Product" });
       } catch (err) {
         setError(err.message);
       } finally {
@@ -25,13 +30,13 @@ const product = ({ id, onAddToCart, setToast }) => {
     };
 
     if (id) fetchProduct();
-  }, [id]);
+  }, [id, navigation]);
 
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#2563eb" />
-        <Text style={{ marginTop: 8, color: "#6b7280" }}>Loading product...</Text>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <Text style={{ marginTop: 8, color: theme.textSecondary }}>Loading product...</Text>
       </View>
     );
   }
@@ -44,10 +49,15 @@ const product = ({ id, onAddToCart, setToast }) => {
     );
   }
 
-  const parsedCategories = product?.categories ? JSON.parse(product.categories) : [];
+  let parsedCategories = [];
+  try {
+    parsedCategories = product?.categories ? JSON.parse(product.categories) : [];
+  } catch {
+    parsedCategories = [];
+  }
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: "#ffffff" }}>
+    <ScrollView style={{ flex: 1, backgroundColor: theme.background }}>
       <View style={{ padding: 16 }}>
         <Image
           source={product?.image_url ? { uri: product.image_url } : placeHolder}
@@ -55,9 +65,9 @@ const product = ({ id, onAddToCart, setToast }) => {
           resizeMode="cover"
         />
 
-        <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 8 }}>{product?.name}</Text>
-        <Text style={{ fontSize: 16, color: "#4b5563", marginBottom: 16 }}>{product?.description}</Text>
-        <Text style={{ fontSize: 22, fontWeight: "bold", color: "#059669", marginBottom: 16 }}>
+        <Text style={{ fontSize: 24, fontWeight: "bold", color: theme.text, marginBottom: 8 }}>{product?.name}</Text>
+        <Text style={{ fontSize: 16, color: theme.textSecondary, marginBottom: 16 }}>{product?.description}</Text>
+        <Text style={{ fontSize: 22, fontWeight: "bold", color: theme.primary, marginBottom: 16 }}>
           ${Number(product?.price || 0).toFixed(2)}
         </Text>
 
@@ -89,9 +99,9 @@ const product = ({ id, onAddToCart, setToast }) => {
               type: "success",
             });
           }}
-          style={{ backgroundColor: "#2563eb", padding: 16, borderRadius: 8, alignItems: "center", marginBottom: 24 }}
+            style={{ backgroundColor: theme.primary, padding: 16, borderRadius: 8, alignItems: "center", marginBottom: 24 }}
         >
-          <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: "bold" }}>Add to Cart</Text>
+          <Text style={{ color: theme.surface, fontSize: 16, fontWeight: "bold" }}>Add to Cart</Text>
         </Pressable>
 
         {/* Categories */}

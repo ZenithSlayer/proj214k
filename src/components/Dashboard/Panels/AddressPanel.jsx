@@ -1,9 +1,13 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, Pressable, Alert } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
+import { useState } from "react";
+import { Alert, Pressable, Text, TextInput, View } from "react-native";
+import { useAppTheme } from "../../../context/ThemeContext";
 import { addressesApi } from "../../../services/addresses.ts";
+import { createPanelStyles } from "./panelStyles";
 
 export const AddressPanel = ({ data, setData, setToast }) => {
+  const { theme } = useAppTheme();
+  const styles = createPanelStyles(theme);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({
     country: "",
@@ -115,18 +119,18 @@ export const AddressPanel = ({ data, setData, setToast }) => {
   };
 
   return (
-    <View>
-      <Text>Your Addresses</Text>
-      <View>
+    <View style={styles.panel}>
+      <Text style={styles.title}>Your Addresses</Text>
+      <View style={{ gap: 12 }}>
         {addresses.length === 0 ? (
-          <Text>No addresses saved yet.</Text>
+          <Text style={styles.empty}>No addresses saved yet.</Text>
         ) : (
           addresses.map(addr => {
             if (!addr) return null;
 
             return (
-              <View key={addr.id}>
-                <View>
+              <View key={addr.id} style={styles.card}>
+                <View style={styles.row}>
                   <Pressable onPress={() => handleFavorite(addr.id)}>
                     <FontAwesome 
                       name={addr?.is_favorite ? "star" : "star-o"} 
@@ -134,18 +138,18 @@ export const AddressPanel = ({ data, setData, setToast }) => {
                       color={addr?.is_favorite ? "#f59e0b" : "#6b7280"}
                     />
                   </Pressable>
-                  <View>
-                    <Text>{addr.street || "Unknown Street"}, {addr.number || "N/A"}</Text>
-                    <Text>{addr.city}, {addr.state}, {addr.country}</Text>
-                    <Text>{addr.postal_code}</Text>
+                  <View style={{ flex: 1, gap: 4 }}>
+                    <Text style={styles.text}>{addr.street || "Unknown Street"}, {addr.number || "N/A"}</Text>
+                    <Text style={styles.muted}>{addr.city}, {addr.state}, {addr.country}</Text>
+                    <Text style={styles.muted}>{addr.postal_code}</Text>
                   </View>
                 </View>
-                <View>
-                  <Pressable onPress={() => handleEdit(addr)}>
-                    <Text>Edit</Text>
+                <View style={styles.actions}>
+                  <Pressable onPress={() => handleEdit(addr)} style={styles.secondaryButton}>
+                    <Text style={styles.secondaryButtonText}>Edit</Text>
                   </Pressable>
-                  <Pressable onPress={() => handleDelete(addr.id)}>
-                    <Text>Delete</Text>
+                  <Pressable onPress={() => handleDelete(addr.id)} style={styles.dangerButton}>
+                    <Text style={styles.dangerText}>Delete</Text>
                   </Pressable>
                 </View>
               </View>
@@ -154,47 +158,59 @@ export const AddressPanel = ({ data, setData, setToast }) => {
         )}
       </View>
 
-      <View>
-        <Text>{editingId ? "Edit Address" : "Add New Address"}</Text>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{editingId ? "Edit Address" : "Add New Address"}</Text>
         <TextInput 
           placeholder="Country" 
+          placeholderTextColor="#94a3b8"
+          style={styles.input}
           value={form.country} 
           onChangeText={text => handleFieldChange("country", text)} 
         />
         <TextInput 
           placeholder="State" 
+          placeholderTextColor="#94a3b8"
+          style={styles.input}
           value={form.state} 
           onChangeText={text => handleFieldChange("state", text)} 
         />
         <TextInput 
           placeholder="City" 
+          placeholderTextColor="#94a3b8"
+          style={styles.input}
           value={form.city} 
           onChangeText={text => handleFieldChange("city", text)} 
         />
         <TextInput 
           placeholder="Street" 
+          placeholderTextColor="#94a3b8"
+          style={styles.input}
           value={form.street} 
           onChangeText={text => handleFieldChange("street", text)} 
         />
         <TextInput 
           placeholder="Number" 
+          placeholderTextColor="#94a3b8"
+          style={styles.input}
           value={form.number} 
           keyboardType="numeric"
           onChangeText={text => handleFieldChange("number", text.replace(/\D/g, ""))} 
         />
         <TextInput 
           placeholder="Postal Code" 
+          placeholderTextColor="#94a3b8"
+          style={styles.input}
           value={form.postal_code} 
           onChangeText={text => handleFieldChange("postal_code", text)} 
         />
 
-        <View>
-          <Pressable onPress={handleSubmit}>
-            <Text>{editingId ? "Update Address" : "Add Address"}</Text>
+        <View style={styles.actions}>
+          <Pressable onPress={handleSubmit} style={styles.primaryButton}>
+            <Text style={styles.primaryButtonText}>{editingId ? "Update Address" : "Add Address"}</Text>
           </Pressable>
           {editingId && (
-            <Pressable onPress={resetForm}>
-              <Text>Cancel</Text>
+            <Pressable onPress={resetForm} style={styles.secondaryButton}>
+              <Text style={styles.secondaryButtonText}>Cancel</Text>
             </Pressable>
           )}
         </View>
