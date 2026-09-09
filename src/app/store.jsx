@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, Pressable, ActivityIndicator, StyleSheet, ScrollView } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import ItemRow from "../components/ItemRow.jsx";
+import { useAppTheme } from "../context/ThemeContext";
 import { productsApi } from "../services/products";
 
-const Store = ({ categoryId }) => {
+const Store = ({ categoryId, searchTerm = "" }) => {
+  const { theme } = useAppTheme();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
@@ -34,9 +36,19 @@ const Store = ({ categoryId }) => {
     fetchAll();
   }, [categoryId]);
 
-  const totalPages = Math.ceil(products.length / itemsPerPage) || 1;
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [searchTerm]);
+
+  const filteredProducts = products.filter((product) => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return true;
+    return [product.name, product.description, product.category_name, product.category_names]
+      .some((value) => String(value || "").toLowerCase().includes(query));
+  });
+  const filteredTotalPages = Math.ceil(filteredProducts.length / itemsPerPage) || 1;
   const startIndex = currentPage * itemsPerPage;
-  const currentView = products.slice(startIndex, startIndex + itemsPerPage);
+  const currentView = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
 
   const rows = [];
   for (let i = 0; i < currentView.length; i += itemsPerRow) {
@@ -46,8 +58,8 @@ const Store = ({ categoryId }) => {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#ff6f61" />
-        <Text style={styles.loadingText}>Loading store...</Text>
+        <ActivityIndicator size="large" color={theme.accent} />
+        <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Loading store...</Text>
       </View>
     );
   }
@@ -60,34 +72,34 @@ const Store = ({ categoryId }) => {
         ))}
       </View>
 
-      {totalPages > 1 && (
+      {filteredTotalPages > 1 && (
         <View style={styles.paginationBar}>
           <Pressable
             disabled={currentPage === 0}
             onPress={() => setCurrentPage((p) => p - 1)}
             style={({ pressed }) => [
-              styles.pageButton,
+              styles.pageButton, { backgroundColor: theme.accent },
               currentPage === 0 && styles.buttonDisabled,
               pressed && styles.buttonPressed,
             ]}
           >
-            <Text style={styles.buttonText}>← Previous</Text>
+            <Text style={[styles.buttonText, { color: theme.surface }]}>← Previous</Text>
           </Pressable>
 
-          <Text style={styles.pageIndicator}>
-            Page {currentPage + 1} of {totalPages}
+          <Text style={[styles.pageIndicator, { color: theme.textSecondary }]}>
+            Page {currentPage + 1} of {filteredTotalPages}
           </Text>
 
           <Pressable
-            disabled={currentPage === totalPages - 1}
+            disabled={currentPage === filteredTotalPages - 1}
             onPress={() => setCurrentPage((p) => p + 1)}
             style={({ pressed }) => [
-              styles.pageButton,
-              currentPage === totalPages - 1 && styles.buttonDisabled,
+              styles.pageButton, { backgroundColor: theme.accent },
+              currentPage === filteredTotalPages - 1 && styles.buttonDisabled,
               pressed && styles.buttonPressed,
             ]}
           >
-            <Text style={styles.buttonText}>Next →</Text>
+            <Text style={[styles.buttonText, { color: theme.surface }]}>Next →</Text>
           </Pressable>
         </View>
       )}

@@ -1,27 +1,19 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { cartApi } from "../services/cart";
 
 const CartContext = createContext();
 export const useCart = () => useContext(CartContext);
-
-const API_URL = "http://192.168.0.241:5000/api/cart";
-const getToken = () => localStorage.getItem("token");
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
 
   const fetchCart = useCallback(async () => {
-    const token = getToken();
+    const token = await AsyncStorage.getItem("token");
     if (!token) return;
 
     try {
-      const res = await fetch(API_URL, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      const data = await res.json();
+      const data = await cartApi.getCart();
       setCart(Array.isArray(data) ? data : data.items || []);
     } catch (err) {
       console.error("Error loading cart:", err);
@@ -35,18 +27,7 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = async (product, quantity) => {
     try {
-      await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${getToken()}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          product_id: product.id,
-          quantity,
-        }),
-      });
-
+      await cartApi.addToCart(product.id, quantity);
       await fetchCart();
     } catch (err) {
       console.error("Add to cart error:", err);
@@ -55,13 +36,7 @@ export const CartProvider = ({ children }) => {
 
   const removeFromCart = async (id) => {
     try {
-      await fetch(`${API_URL}/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${getToken()}`,
-        },
-      });
-
+      await cartApi.remove(id);
       setCart((prev) => prev.filter((item) => item.id !== id));
     } catch (err) {
       console.error("Remove error:", err);
@@ -70,15 +45,7 @@ export const CartProvider = ({ children }) => {
 
   const updateQuantity = async (id, quantity) => {
     try {
-      await fetch(`${API_URL}/${id}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${getToken()}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ quantity }),
-      });
-
+      await cartApi.updateQuantity(id, quantity);
       await fetchCart();
     } catch (err) {
       console.error("Update error:", err);
@@ -89,7 +56,7 @@ export const CartProvider = ({ children }) => {
     setCart([]);
   };
 
-return (
+  return (
     <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, fetchCart }}>
       {children}
     </CartContext.Provider>

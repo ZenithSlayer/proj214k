@@ -1,10 +1,12 @@
-import React, { useState } from "react";
-import { View, Text, Image, Pressable, StyleSheet, Platform } from "react-native";
 import { useRouter } from "expo-router";
+import { useState } from "react";
+import { Image, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import placeHolder from "../assets/placeHolder.png";
+import { useAppTheme } from "../context/ThemeContext";
 
 const StoreItem = ({ item }) => {
   const router = useRouter();
+  const { theme } = useAppTheme();
   const [isHovered, setIsHovered] = useState(false);
 
   const handlePress = () => {
@@ -19,7 +21,7 @@ const StoreItem = ({ item }) => {
       onHoverIn={() => setIsHovered(true)}
       onHoverOut={() => setIsHovered(false)}
       style={({ pressed }) => [
-        styles.card,
+        styles.card, { backgroundColor: theme.surface, borderColor: theme.border },
         (isHovered || pressed) && styles.cardHovered,
       ]}
     >
@@ -31,20 +33,20 @@ const StoreItem = ({ item }) => {
         />
       </View>
 
-      <Text style={styles.title} numberOfLines={1}>
+      <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>
         {item?.name}
       </Text>
 
-      <Text style={styles.description} numberOfLines={2}>
+      <Text style={[styles.description, { color: theme.textSecondary }]} numberOfLines={2}>
         {item?.description}
       </Text>
 
-      <Text style={styles.price}>
+      <Text style={[styles.price, { color: theme.accent }]}>
         ${item?.price ? Number(item.price).toFixed(2) : "0.00"}
       </Text>
 
-      <View style={styles.button}>
-        <Text style={styles.buttonText}>View Details</Text>
+      <View style={[styles.button, { backgroundColor: theme.accent }]}>
+        <Text style={[styles.buttonText, { color: theme.surface }]}>View Details</Text>
       </View>
     </Pressable>
   );
@@ -66,6 +68,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 5,
+    borderWidth: 1,
   },
   cardHovered: {
     ...(Platform.OS === "web" && {

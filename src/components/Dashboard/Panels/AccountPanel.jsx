@@ -1,8 +1,10 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, Pressable, Alert } from "react-native";
-import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import { Alert, Pressable, Text, TextInput, View } from "react-native";
+import { useAppTheme } from "../../../context/ThemeContext";
 import { usersApi } from "../../../services/users";
+import { createPanelStyles } from "./panelStyles";
 
 const isValidEmail = (email) => {
   const basicCheck = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -19,6 +21,8 @@ const isValidEmail = (email) => {
 };
 
 export const AccountPanel = ({ data, setData, setToast }) => {
+  const { theme } = useAppTheme();
+  const styles = createPanelStyles(theme);
   const router = useRouter();
   
   const [profileForm, setProfileForm] = useState({
@@ -102,57 +106,67 @@ export const AccountPanel = ({ data, setData, setToast }) => {
   };
 
   return (
-    <View>
-      <Text>Account Settings</Text>
+    <View style={styles.panel}>
+      <Text style={styles.title}>Account Settings</Text>
 
-      <View>
-        <Text>Update Profile</Text>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Update Profile</Text>
         <TextInput 
-          placeholder="Name" 
+          placeholder="Name"
+          placeholderTextColor="#94a3b8"
+          style={styles.input}
           value={profileForm.name} 
           onChangeText={text => setProfileForm({ ...profileForm, name: text })} 
         />
         <TextInput 
-          placeholder="Email" 
+          placeholder="Email"
+          placeholderTextColor="#94a3b8"
+          style={styles.input}
           value={profileForm.email} 
           onChangeText={text => setProfileForm({ ...profileForm, email: text })}
           keyboardType="email-address"
           autoCapitalize="none"
         />
-        <Pressable onPress={handleUpdateProfile} disabled={isSubmitting}>
-          <Text>Update Info</Text>
+        <Pressable onPress={handleUpdateProfile} disabled={isSubmitting} style={styles.primaryButton}>
+          <Text style={styles.primaryButtonText}>{isSubmitting ? "Updating..." : "Update Info"}</Text>
         </Pressable>
       </View>
 
-      <View>
-        <Text>Security</Text>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Security</Text>
         <TextInput 
           placeholder="Current Password" 
+          placeholderTextColor="#94a3b8"
+          style={styles.input}
           secureTextEntry
           value={passwordForm.currentPassword}
           onChangeText={text => setPasswordForm({ ...passwordForm, currentPassword: text })}
         />
         <TextInput 
           placeholder="New Password (min 6 chars)" 
+          placeholderTextColor="#94a3b8"
+          style={styles.input}
           secureTextEntry
           value={passwordForm.newPassword}
           onChangeText={text => setPasswordForm({ ...passwordForm, newPassword: text })}
         />
         <TextInput 
           placeholder="Confirm New Password" 
+          placeholderTextColor="#94a3b8"
+          style={styles.input}
           secureTextEntry
           value={passwordForm.confirmPassword}
           onChangeText={text => setPasswordForm({ ...passwordForm, confirmPassword: text })}
         />
-        <Pressable onPress={handleChangePassword}>
-          <Text>Change Password</Text>
+        <Pressable onPress={handleChangePassword} style={styles.secondaryButton}>
+          <Text style={styles.secondaryButtonText}>Change Password</Text>
         </Pressable>
       </View>
 
-      <View>
-        <Text>Danger Zone</Text>
-        <Pressable onPress={handleDeleteAccount}>
-          <Text>Delete My Account</Text>
+      <View style={[styles.section, { borderWidth: 1, borderColor: "#7f1d1d" }]}>
+        <Text style={styles.sectionTitle}>Danger Zone</Text>
+        <Pressable onPress={handleDeleteAccount} style={styles.dangerButton}>
+          <Text style={styles.dangerText}>Delete My Account</Text>
         </Pressable>
       </View>
     </View>

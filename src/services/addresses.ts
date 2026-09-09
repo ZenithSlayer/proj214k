@@ -1,4 +1,4 @@
-import { request } from "./client.ts";
+import { request } from "./client";
 
 export interface Address {
   id?: string;

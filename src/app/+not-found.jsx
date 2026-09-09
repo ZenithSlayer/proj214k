@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, Image } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { Image, Text, View } from "react-native";
+import { useAppTheme } from "../context/ThemeContext";
 
 const ErrorPage = () => {
+  const { theme } = useAppTheme();
   const { statusCode } = useLocalSearchParams();
   const router = useRouter();
   const code = statusCode || 404;
@@ -26,8 +28,8 @@ const ErrorPage = () => {
   }, [router, waiter]);
 
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 20, backgroundColor: "#ffffff" }}>
-      <Text style={{ fontSize: 32, fontWeight: "bold", marginBottom: 16 }}>
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 20, backgroundColor: theme.background }}>
+      <Text style={{ fontSize: 32, fontWeight: "bold", color: theme.text, marginBottom: 16 }}>
         Error {code}
       </Text>
       
@@ -37,11 +39,11 @@ const ErrorPage = () => {
         resizeMode="contain"
       />
       
-      <Text style={{ fontSize: 18, fontWeight: "600", marginBottom: 8, color: "#111827" }}>
+      <Text style={{ fontSize: 18, fontWeight: "600", marginBottom: 8, color: theme.text }}>
         Oops! Something went wrong.
       </Text>
       
-      <Text style={{ fontSize: 14, color: "#6b7280" }}>
+      <Text style={{ fontSize: 14, color: theme.textSecondary }}>
         Redirecting to home in {countdown}...
       </Text>
     </View>
