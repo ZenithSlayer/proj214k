@@ -80,7 +80,7 @@ const product = ({ id, onAddToCart, setToast }) => {
             <Text style={{ fontSize: 18, fontWeight: "bold" }}>-</Text>
           </Pressable>
 
-          <Text style={{ marginHorizontal: 20, fontSize: 18, fontWeight: "600" }}>{quantity}</Text>
+          <Text style={{ marginHorizontal: 20, fontSize: 18, fontWeight: "600", color: theme.text }}>{quantity}</Text>
 
           <Pressable
             onPress={() => setQuantity((q) => q + 1)}
