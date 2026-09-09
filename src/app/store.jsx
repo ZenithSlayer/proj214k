@@ -10,7 +10,7 @@ const Store = ({ categoryId, searchTerm = "" }) => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
 
-  const itemsPerRow = 2; // Updated to display 2 items per row
+  const itemsPerRow = 2;
   const rowsPerPage = 4;
   const itemsPerPage = itemsPerRow * rowsPerPage;
 

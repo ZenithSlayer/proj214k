@@ -37,7 +37,7 @@ const StoreItem = ({ item }) => {
         {item?.name}
       </Text>
 
-      <Text style={[styles.description, { color: theme.textSecondary }]} numberOfLines={2}>
+      {/* <Text style={[styles.description, { color: theme.textSecondary }]} numberOfLines={2}>
         {item?.description}
       </Text>
 
@@ -47,7 +47,7 @@ const StoreItem = ({ item }) => {
 
       <View style={[styles.button, { backgroundColor: theme.accent }]}>
         <Text style={[styles.buttonText, { color: theme.surface }]}>View Details</Text>
-      </View>
+      </View> */}
     </Pressable>
   );
 };
@@ -58,12 +58,9 @@ const styles = StyleSheet.create({
     maxWidth: 350,
     backgroundColor: "#ffffff",
     borderRadius: 8,
-    padding: 20,
+    padding: 5,
     alignItems: "center",
-    margin: 8,
-    // Elevation for Android
     elevation: 3,
-    // Shadow for iOS / Web
     shadowColor: "#000000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -83,18 +80,19 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 200,
     aspectRatio: 1,
-    borderRadius: 5,
     overflow: "hidden",
-    marginBottom: 15,
+    padding: 5,
   },
   image: {
+    borderRadius: 5,
     width: "100%",
     height: "100%",
   },
   title: {
-    fontSize: 18,
+    fontSize: 13,
     fontWeight: "bold",
     color: "#1f2937",
+    marginTop: 10,
     marginBottom: 5,
     textAlign: "center",
   },
