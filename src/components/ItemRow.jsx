@@ -22,7 +22,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   itemWrapper: {
-    width: "48%", // Places two items per row with space in between
+    width: "48%",
     marginBottom: 16,
   },
 });
