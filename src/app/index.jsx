@@ -1,7 +1,7 @@
 import { Image, ScrollView, Text, View } from 'react-native';
 import Art from '../assets/wideArt.jpg';
 import { useAppTheme } from '../context/ThemeContext';
-import StorePage from './store';
+import { Link } from 'expo-router'; // Use Expo Router link if needed
 
 const Home = () => {
   const { theme } = useAppTheme();
@@ -18,7 +18,10 @@ const Home = () => {
           resizeMode="cover" 
         />
         
-        <StorePage />
+        {/* If you want users to navigate to store, use a Link or router */}
+        <Link href="/store" style={{ color: theme.accent, fontSize: 16, marginTop: 10 }}>
+          Go to Store
+        </Link>
       </View>
     </ScrollView>
   );

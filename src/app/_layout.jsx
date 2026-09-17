@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { usePathname, useRouter } from "expo-router";
@@ -88,8 +89,8 @@ function LayoutContent() {
 
   return (
     <CartProvider>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <View style={{ flex: 1 }}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <View style={{ flex: 1 }}>
           <Drawer
             drawerContent={(props) => <AppDrawerContent {...props} />}
             screenOptions={{
@@ -103,9 +104,8 @@ function LayoutContent() {
             <Drawer.Screen name="cart" options={{ drawerLabel: "Shopping Cart", title: "My Cart" }} />
             <Drawer.Screen name="orders" options={{ drawerLabel: "My Orders", title: "Order History" }} />
           </Drawer>
-          <Footer />
-          </View>
-        </GestureHandlerRootView>
+        </View>
+      </GestureHandlerRootView>
     </CartProvider>
   );
 }
