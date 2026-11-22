@@ -2,7 +2,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useEffect, useState } from "react";
 import { Image, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { useAppTheme } from "../../../context/ThemeContext";
-import { api } from "../../../services/api";
+import { api } from "../../../services/client";
 import { createPanelStyles } from "./panelStyles";
 
 const PAGE_SIZE = 6;
@@ -25,7 +25,7 @@ export const ProductPanel = ({ data, setData, setToast }) => {
     api.get("/categories")
       .then(setCategories)
       .catch((error) => setToast?.({ message: error.message, type: "error" }));
-  }, []);
+  }, [setToast]);
 
   const filteredProducts = products.filter((product) => {
     const query = search.trim().toLowerCase();

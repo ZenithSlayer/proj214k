@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "jest --watchAll"
+    "migrate:catalog": "node scripts/migrate-catalog.js",
+    "test": "jest --runInBand"
   },
   "keywords": [],
   "author": "",
@@ -21,7 +22,8 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.3.0",
-    "mysql2": "^3.20.0"
+    "mysql2": "^3.20.0",
+    "redis": "^5.5.6"
   },
   "devDependencies": {
     "jest": "^30.3.0",

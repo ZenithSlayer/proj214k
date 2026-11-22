@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Alert, Pressable, Text, TextInput, View } from "react-native";
+import { useCart } from "../../../context/CartContext";
 import { useAppTheme } from "../../../context/ThemeContext";
 import { usersApi } from "../../../services/users";
 import { createPanelStyles } from "./panelStyles";
@@ -22,6 +23,7 @@ const isValidEmail = (email) => {
 
 export const AccountPanel = ({ data, setData, setToast }) => {
   const { theme } = useAppTheme();
+  const { clearCart } = useCart();
   const styles = createPanelStyles(theme);
   const router = useRouter();
   
@@ -92,13 +94,20 @@ export const AccountPanel = ({ data, setData, setToast }) => {
           onPress: async () => {
             try {
               await usersApi.deleteAccount();
-              await AsyncStorage.removeItem("token");
-              await AsyncStorage.removeItem("user");
-              setToast?.({ message: "Account deleted.", type: "success" });
-              router.push("/auth");
-            } catch (err) {
-              setToast?.({ message: "Delete failed.", type: "error" });
+            } catch (error) {
+              setToast?.({ message: error.message || "Delete failed.", type: "error" });
+              return;
             }
+
+            try {
+              await AsyncStorage.multiRemove(["token", "user"]);
+            } catch (error) {
+              console.error("Could not clear deleted account data from storage:", error);
+              setToast?.({ message: "Account deleted, but saved account data could not be cleared.", type: "error" });
+            }
+
+            clearCart();
+            router.replace("/");
           }
         }
       ]

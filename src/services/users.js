@@ -1,19 +1,11 @@
-import { request } from "./client.ts";
+import { api } from "./client";
 
 export const usersApi = {
-  getMe: () => request("/users/me"),
+  getMe: () => api.get("/users/me"),
 
-  updateProfile: (data) => request("/users/profile", {
-    method: "PUT",
-    body: JSON.stringify(data)
-  }),
+  updateProfile: (data) => api.put("/users/profile", data),
 
-  deleteAccount: () => request("/users", { 
-    method: "DELETE" 
-  }),
+  deleteAccount: () => api.delete("/users"),
 
-  changePassword: (data) => request("/users/password", {
-    method: "PUT",
-    body: JSON.stringify(data)
-  }),
+  changePassword: (data) => api.put("/users/password", data),
 };

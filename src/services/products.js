@@ -1,11 +1,11 @@
-import { request } from "./client.ts";
+import { api } from "./client";
 
 export const productsApi = {
-  getAll: () => request("/products"),
-  
-  getAllTags: (id) => request(`/products/tag`),
+  getAll: () => api.get("/products"),
 
-  getAllCategory: (id) => request(`/products/tag/${id}`),
+  getAllTags: () => api.get("/products/tag"),
 
-  getById: (id) => request(`/products/${id}`),
+  getAllCategory: (id) => api.get(`/products/tag/${id}`),
+
+  getById: (id) => api.get(`/products/${id}`),
 };

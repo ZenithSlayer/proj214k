@@ -3,7 +3,7 @@ import { useCart } from "../context/CartContext";
 import { useAppTheme } from "../context/ThemeContext";
 import { cartApi } from "../services/cart";
 
-const cart = () => {
+const Cart = () => {
   const { theme } = useAppTheme();
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
   const safeCart = Array.isArray(cart) ? cart : [];
@@ -37,7 +37,7 @@ const cart = () => {
 
   const handleCheckout = async () => {
     try {
-      await cartApi.checkout(safeCart, total);
+      await cartApi.checkout();
       clearCart();
       notify("Order placed successfully!");
     } catch (err) {
@@ -148,4 +148,4 @@ const styles = StyleSheet.create({
   totalText: { fontSize: 22, fontWeight: "bold", marginBottom: 16 },
 });
 
-export default cart;
+export default Cart;

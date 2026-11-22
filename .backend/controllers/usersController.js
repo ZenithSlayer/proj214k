@@ -1,22 +1,13 @@
-const db = require("../db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-
-const query = (sql, params) => {
-  return new Promise((resolve, reject) => {
-    db.query(sql, params, (err, results) => {
-      if (err) reject(err);
-      else resolve(results);
-    });
-  });
-};
+const { query } = require("../services/database");
+const { requestService } = require("../services/serviceRequest");
 
 exports.getMe = async (req, res) => {
   try {
     const userId = req.user.id;
-    const [userRows, orders, addresses, cards] = await Promise.all([
+    const [userRows, addresses, cards] = await Promise.all([
       query("SELECT id, name, email, cpf, is_admin FROM users WHERE id = ?", [userId]),
-      query("SELECT * FROM orders WHERE user_id = ?", [userId]),
       query("SELECT * FROM addresses WHERE user_id = ?", [userId]),
       query("SELECT id, card_number, expiration_date, IFNULL(is_favorite, 0) AS is_favorite FROM credit_cards WHERE user_id = ?", [userId])
     ]);
@@ -25,7 +16,6 @@ exports.getMe = async (req, res) => {
 
     res.json({
       user: userRows[0],
-      orders: orders || [],
       addresses: addresses || [],
       cards: cards || []
     });
@@ -34,8 +24,21 @@ exports.getMe = async (req, res) => {
   }
 };
 
+exports.validateAccount = async (req, res) => {
+  try {
+    const users = await query(
+      "SELECT id, is_admin FROM users WHERE id = ?",
+      [req.user.id],
+    );
+    if (!users.length) return res.status(404).json({ error: "User not found" });
+    res.json({ user: users[0] });
+  } catch (err) {
+    res.status(500).json({ error: "Could not verify account" });
+  }
+};
+
 exports.registerUser = async (req, res) => {
-  const { name, email, password, cpf, is_admin } = req.body;
+  const { name, email, password, cpf } = req.body;
   if (!name || !email || !password || !cpf) {
     return res.status(400).json({ error: "All fields are required" });
   }
@@ -43,10 +46,10 @@ exports.registerUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await query(
       "INSERT INTO users (name, email, password, cpf, is_admin) VALUES (?, ?, ?, ?, ?)",
-      [name, email, hashedPassword, cpf, is_admin || false]
+      [name, email, hashedPassword, cpf, false]
     );
     const token = jwt.sign(
-      { id: result.insertId, email, name, is_admin: is_admin || false },
+      { id: result.insertId, email, name, is_admin: false },
       process.env.JWT_SECRET || "secret_key",
       { expiresIn: "7d" }
     );
@@ -114,6 +117,18 @@ exports.changePassword = async (req, res) => {
 
 exports.deleteAccount = async (req, res) => {
   try {
+    if (process.env.SERVICE_NAME === "users") {
+      try {
+        await Promise.all([
+          requestService("cart", `/cart/internal/users/${req.user.id}`, { method: "DELETE", internal: true }),
+          requestService("orders", `/orders/internal/users/${req.user.id}`, { method: "DELETE", internal: true }),
+        ]);
+      } catch (error) {
+        console.error(`Could not remove dependent data for user ${req.user.id}:`, error.message);
+        return res.status(503).json({ error: "Could not delete the account's cart and order data. Please try again." });
+      }
+    }
+
     const result = await query("DELETE FROM users WHERE id = ?", [req.user.id]);
     if (result.affectedRows === 0) return res.status(404).json({ error: "User not found" });
     res.json({ message: "Account deleted successfully" });
@@ -169,19 +184,6 @@ exports.setFavoriteAddress = async (req, res) => {
     }
 };
 
-exports.addCard = async (req, res) => {
-    const { card_number, security_code, expiration_date } = req.body;
-    try {
-      await query(
-        "INSERT INTO credit_cards (user_id, card_number, security_code, expiration_date) VALUES (?, ?, ?, ?)",
-        [req.user.id, card_number, security_code, expiration_date]
-      );
-      res.json({ message: "Card added" });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-};
-
 exports.deleteCard = async (req, res) => {
     try {
       await query("DELETE FROM credit_cards WHERE id=? AND user_id=?", [req.params.id, req.user.id]);
@@ -206,7 +208,7 @@ exports.addCard = async (req, res) => {
   try {
     await query(
       "INSERT INTO credit_cards (user_id, card_number, security_code, expiration_date, is_favorite) VALUES (?, ?, ?, ?, ?)",
-      [req.user.id, card_number, security_code, expiration_date, 0] // Always insert a default 0
+      [req.user.id, card_number, security_code, expiration_date, 0]
     );
     res.json({ message: "Card added successfully" });
   } catch (err) {

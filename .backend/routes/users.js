@@ -2,10 +2,12 @@ const express = require("express");
 const router = express.Router();
 const usersController = require("../controllers/usersController");
 const auth = require("../middleware/auth");
+const serviceAuth = require("../middleware/serviceAuth");
 
 router.post("/register", usersController.registerUser);
 router.post("/login", usersController.loginUser);
 
+router.get("/internal/validate", serviceAuth, auth, usersController.validateAccount);
 router.use(auth);
 
 router.get("/me", usersController.getMe);

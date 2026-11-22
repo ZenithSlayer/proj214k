@@ -19,7 +19,7 @@ async function main() {
     port: process.env.DB_PORT || 3306,
     user: process.env.DB_USER || "root",
     password: process.env.DB_PASSWORD || "",
-    database: process.env.DB_NAME || "projeto22026", // Fallback added here
+    database: process.env.DB_NAME || "projeto22026",
   });
 
   console.log("Clearing old tables...");
@@ -118,14 +118,16 @@ async function main() {
   const orderItems = [];
   for (let i = 0; i < CONFIG.ORDERS; i++) {
     const orderId = orderRes.insertId + i;
+    const productId = faker.number.int({ min: 1, max: CONFIG.PRODUCTS });
     orderItems.push([
-      orderId, 
-      faker.number.int({ min: 1, max: CONFIG.PRODUCTS }), 
+      orderId,
+      productId,
+      products[productId - 1][1],
       faker.number.int({ min: 1, max: 5 }), 
       faker.commerce.price({ min: 10, max: 1000 })
     ]);
   }
-  await connection.query(`INSERT INTO order_items (order_id, product_id, quantity, price) VALUES ?`, [orderItems]);
+  await connection.query(`INSERT INTO order_items (order_id, product_id, product_name, quantity, price) VALUES ?`, [orderItems]);
 
   console.log("Generating cart items...");
   const cartItems = [];

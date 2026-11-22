@@ -1,26 +1,13 @@
-import { request } from "./client.ts";
+import { api } from "./client";
 
 export const cartApi = {
-  getCart: () => request("/cart"),
+  getCart: () => api.get("/cart"),
 
-  addToCart: (productId, quantity) =>
-    request("/cart", {
-      method: "POST",
-      body: JSON.stringify({ product_id: productId, quantity }),
-    }),
+  addToCart: (productId, quantity) => api.post("/cart", { product_id: productId, quantity }),
 
-  updateQuantity: (id, quantity) =>
-    request(`/cart/${id}`, {
-      method: "PUT",
-      body: JSON.stringify({ quantity }),
-    }),
+  updateQuantity: (id, quantity) => api.put(`/cart/${id}`, { quantity }),
 
-  remove: (id) =>
-    request(`/cart/${id}`, { method: "DELETE" }),
+  remove: (id) => api.delete(`/cart/${id}`),
 
-  checkout: (items, total) =>
-    request("/orders", {
-      method: "POST",
-      body: JSON.stringify({ items, total }),
-    }),
+  checkout: () => api.post("/orders"),
 };

@@ -1,15 +1,7 @@
-import { request } from "./client.ts";
+import { api } from "./client";
 
 export const authApi = {
-  login: (credentials) => 
-    request("/users/login", {
-      method: "POST",
-      body: JSON.stringify(credentials),
-    }),
+  login: (credentials) => api.post("/users/login", credentials),
 
-  register: (userData) => 
-    request("/users/register", {
-      method: "POST",
-      body: JSON.stringify(userData),
-    }),
+  register: (userData) => api.post("/users/register", userData),
 };

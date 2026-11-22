@@ -11,8 +11,11 @@ const dbConfig = {
 
 let db;
 let isRetrying = false;
+let retryTimer;
+let isClosing = false;
 
 function handleDisconnect() {
+  if (isClosing) return;
   db = mysql.createConnection(dbConfig);
 
   db.connect((err) => {
@@ -20,11 +23,11 @@ function handleDisconnect() {
       console.error("Database connection failed:", err.message);
       if (!isRetrying) {
         isRetrying = true;
-        console.log("Retrying connection in 5 seconds...");
-        setTimeout(() => {
+        retryTimer = setTimeout(() => {
           isRetrying = false;
           handleDisconnect();
         }, 5000);
+        retryTimer.unref();
       }
     } else {
       console.log("Connected to MySQL/MariaDB successfully!");
@@ -46,5 +49,11 @@ handleDisconnect();
 module.exports = {
   query: (sql, args, callback) => {
     return db.query(sql, args, callback);
-  }
+  },
+  end: () => new Promise((resolve, reject) => {
+    isClosing = true;
+    clearTimeout(retryTimer);
+    if (!db) return resolve();
+    db.end((error) => error ? reject(error) : resolve());
+  }),
 };

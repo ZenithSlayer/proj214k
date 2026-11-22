@@ -3,6 +3,19 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { uploadDirectory } = require("../middleware/upload");
+const { getCached, setCached, invalidateCatalog, publishEvent } = require("../services/catalog");
+const { toProductInputDto } = require("../dto/product");
+
+const respondWithCachedQuery = async (res, cacheKey, sql, params = []) => {
+  const cached = await getCached(cacheKey);
+  if (cached !== null) return res.json(cached);
+
+  db.query(sql, params, async (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
+    await setCached(cacheKey, results);
+    res.json(results);
+  });
+};
 
 const detectImageExtension = (file) => {
   const buffer = file.buffer;
@@ -63,7 +76,6 @@ exports.uploadImage = async (req, res) => {
 };
 
 exports.getAllProducts = (req, res) => {
-  // Fixed: Specified p.is_deleted to clear the SQL ambiguity
   const sql = `
     SELECT p.*, MIN(c.id) AS category_id, GROUP_CONCAT(c.name) AS category_name, GROUP_CONCAT(c.name) AS category_names
     FROM products p 
@@ -73,10 +85,7 @@ exports.getAllProducts = (req, res) => {
     GROUP BY p.id
   `;
 
-  db.query(sql, (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(results);
-  });
+  return respondWithCachedQuery(res, "products:all", sql);
 };
 
 exports.getAllCategory = (req, res) => {
@@ -88,14 +97,10 @@ exports.getAllCategory = (req, res) => {
     WHERE c.category_id = ? AND p.is_deleted = 0
   `;
 
-  db.query(sql, [id], (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(results);
-  });
+  return respondWithCachedQuery(res, `products:category:${id}`, sql, [id]);
 };
 
 exports.getAllTags = (req, res) => {
-  // Fixed: Corrected ORDER BY clause and removed unnecessary [id] binding
   const sql = `
     SELECT c.id, c.name 
     FROM categories c 
@@ -106,14 +111,14 @@ exports.getAllTags = (req, res) => {
     ORDER BY c.name ASC
   `;
 
-  db.query(sql, (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json(results);
-  });
+  return respondWithCachedQuery(res, "products:tags", sql);
 };
 
-exports.getProductById = (req, res) => {
+exports.getProductById = async (req, res) => {
   const { id } = req.params;
+  const cached = await getCached(`products:item:${id}`);
+  if (cached !== null) return res.json(cached);
+
   const sql = `
     SELECT p.*, MIN(c.id) AS category_id, GROUP_CONCAT(c.name) AS category_name, GROUP_CONCAT(c.name) AS category_names
     FROM products p 
@@ -123,18 +128,19 @@ exports.getProductById = (req, res) => {
     GROUP BY p.id
   `;
 
-  db.query(sql, [id], (err, results) => {
+  db.query(sql, [id], async (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
     if (results.length === 0) return res.status(404).json({ message: "Product not found" });
+    await setCached(`products:item:${id}`, results[0]);
     res.json(results[0]);
   });
 };
 
 exports.createProduct = (req, res) => {
-  const { name, description, price, image_url, category_id } = req.body;
+  const { name, description, price, image_url, category_id } = toProductInputDto(req.body);
   const sql = "INSERT INTO products (name, description, price, image_url, admin_id) VALUES (?, ?, ?, ?, ?)";
 
-  db.query(sql, [name, description, price, image_url, req.user.id], (err, result) => {
+  db.query(sql, [name, description, price, image_url, req.user.id], async (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
     
     const product = { 
@@ -144,9 +150,15 @@ exports.createProduct = (req, res) => {
       price, 
       image_url 
     };
-    if (!category_id) return res.status(201).json(product);
+    if (!category_id) {
+      await invalidateCatalog();
+      await publishEvent("product.created", { productId: product.id });
+      return res.status(201).json(product);
+    }
     db.query("INSERT INTO product_categories (product_id, category_id) VALUES (?, ?)", [result.insertId, category_id], (categoryError) => {
       if (categoryError) return res.status(500).json({ error: categoryError.message });
+      void invalidateCatalog();
+      void publishEvent("product.created", { productId: product.id });
       res.status(201).json(product);
     });
   });
@@ -154,17 +166,22 @@ exports.createProduct = (req, res) => {
 
 exports.updateProduct = (req, res) => {
   const { id } = req.params;
-  const { name, description, price, image_url, category_id } = req.body;
+  const { name, description, price, image_url, category_id } = toProductInputDto(req.body);
   const sql = "UPDATE products SET name=?, description=?, price=?, image_url=? WHERE id=? AND is_deleted = 0";
 
-  // Fixed: Converted back to standard callback handling for db.query
-  db.query(sql, [name, description, price, image_url, id], (err) => {
+  db.query(sql, [name, description, price, image_url, id], async (err) => {
     if (err) return res.status(500).json({ error: err.message });
-    if (!category_id) return res.json({ message: "Product updated" });
+    if (!category_id) {
+      await invalidateCatalog();
+      await publishEvent("product.updated", { productId: id });
+      return res.json({ message: "Product updated" });
+    }
     db.query("DELETE FROM product_categories WHERE product_id = ?", [id], (deleteError) => {
       if (deleteError) return res.status(500).json({ error: deleteError.message });
       db.query("INSERT INTO product_categories (product_id, category_id) VALUES (?, ?)", [id, category_id], (categoryError) => {
         if (categoryError) return res.status(500).json({ error: categoryError.message });
+        void invalidateCatalog();
+        void publishEvent("product.updated", { productId: id });
         res.json({ message: "Product updated" });
       });
     });
@@ -175,8 +192,10 @@ exports.deleteProduct = (req, res) => {
   const { id } = req.params;
   const sql = "UPDATE products SET is_deleted = 1 WHERE id = ?";
 
-  db.query(sql, [id], (err, result) => {
+  db.query(sql, [id], async (err, result) => {
     if (err) return res.status(500).json({ error: err.message });
+    await invalidateCatalog();
+    await publishEvent("product.deleted", { productId: id });
     res.json({ message: "Product archived (Soft Deleted)" });
   });
 };

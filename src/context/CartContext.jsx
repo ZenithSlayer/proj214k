@@ -1,34 +1,44 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { usePathname } from "expo-router";
 import { cartApi } from "../services/cart";
 
 const CartContext = createContext();
 export const useCart = () => useContext(CartContext);
 
 export const CartProvider = ({ children }) => {
+  const pathname = usePathname();
   const [cart, setCart] = useState([]);
 
   const fetchCart = useCallback(async () => {
-    const token = await AsyncStorage.getItem("token");
-    if (!token) return;
-
     try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return [];
+
       const data = await cartApi.getCart();
-      setCart(Array.isArray(data) ? data : data.items || []);
+      return Array.isArray(data) ? data : data.items || [];
     } catch (err) {
       console.error("Error loading cart:", err);
-      setCart([]); 
+      return [];
     }
   }, []);
 
   useEffect(() => {
-    fetchCart();
-  }, [fetchCart]);
+    let active = true;
+    const loadCart = async () => {
+      const items = await fetchCart();
+      if (active) setCart(items);
+    };
+    void loadCart();
+    return () => {
+      active = false;
+    };
+  }, [pathname, fetchCart]);
 
   const addToCart = async (product, quantity) => {
     try {
       await cartApi.addToCart(product.id, quantity);
-      await fetchCart();
+      setCart(await fetchCart());
     } catch (err) {
       console.error("Add to cart error:", err);
     }
@@ -46,7 +56,7 @@ export const CartProvider = ({ children }) => {
   const updateQuantity = async (id, quantity) => {
     try {
       await cartApi.updateQuantity(id, quantity);
-      await fetchCart();
+      setCart(await fetchCart());
     } catch (err) {
       console.error("Update error:", err);
     }

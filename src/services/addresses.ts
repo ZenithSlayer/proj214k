@@ -1,35 +1,24 @@
-import { request } from "./client";
+import { api } from "./client";
 
 export interface Address {
-  id?: string;
+  id?: number;
+  country: string;
   street: string;
   city: string;
   state: string;
-  zipCode: string;
-  isFavorite?: boolean;
+  number: string;
+  postal_code?: string;
+  is_favorite?: boolean | number;
 }
 
+type AddressMutationResult = { message: string };
+
 export const addressesApi = {
-  
-  create: (data: Address): Promise<Address> => 
-    request("/users/address", {
-      method: "POST",
-      body: JSON.stringify(data)
-    }),
+  create: (data: Address): Promise<AddressMutationResult> => api.post("/users/address", data),
 
-  update: (id: string, data: Partial<Address>): Promise<Address> => 
-    request(`/users/address/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(data)
-    }),
+  update: (id: number, data: Partial<Address>): Promise<AddressMutationResult> => api.put(`/users/address/${id}`, data),
 
-  delete: (id: string): Promise<void> => 
-    request(`/users/address/${id}`, { 
-      method: "DELETE" 
-    }),
-  
-  setFavorite: (id: string): Promise<Address> => 
-    request(`/users/address/${id}/favorite`, { 
-      method: "PUT" 
-    }),
+  delete: (id: number): Promise<AddressMutationResult> => api.delete(`/users/address/${id}`),
+
+  setFavorite: (id: number): Promise<AddressMutationResult> => api.put(`/users/address/${id}/favorite`),
 };

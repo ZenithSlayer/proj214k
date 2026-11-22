@@ -1,0 +1,168 @@
+x-mysql: &mysql
+  image: mysql:8.4
+  environment: &mysql-environment
+    MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env}
+    MYSQL_USER: ${DB_USER:-proj214k_app}
+    MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+  healthcheck:
+    test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD"]
+    interval: 5s
+    timeout: 5s
+    retries: 20
+  restart: unless-stopped
+
+x-api: &api
+  build:
+    context: ./.backend
+  restart: unless-stopped
+  environment: &api-environment
+    NODE_ENV: production
+    PORT: 3001
+    DB_PORT: 3306
+    DB_USER: ${DB_USER:-proj214k_app}
+    DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+    SERVICE_TO_SERVICE_SECRET: ${SERVICE_TO_SERVICE_SECRET:?Set SERVICE_TO_SERVICE_SECRET in .env}
+    SERVICE_REQUEST_TIMEOUT_MS: ${SERVICE_REQUEST_TIMEOUT_MS:-5000}
+    USERS_SERVICE_URL: http://users-api:3001
+    CATALOG_SERVICE_URL: http://catalog-api:3001
+    CART_SERVICE_URL: http://cart-api:3001
+    ORDERS_SERVICE_URL: http://orders-api:3001
+  healthcheck:
+    test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/health/ready').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+    interval: 10s
+    timeout: 5s
+    retries: 10
+    start_period: 15s
+
+services:
+  users-db:
+    <<: *mysql
+    environment:
+      <<: *mysql-environment
+      MYSQL_DATABASE: users
+    volumes:
+      - users-data:/var/lib/mysql
+      - ./.backend/schema/users.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+
+  catalog-db:
+    <<: *mysql
+    environment:
+      <<: *mysql-environment
+      MYSQL_DATABASE: catalog
+    ports:
+      - "127.0.0.1:${CATALOG_DB_PORT:-3307}:3306"
+    volumes:
+      - catalog-data:/var/lib/mysql
+      - ./.backend/schema/catalog.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+
+  cart-db:
+    <<: *mysql
+    environment:
+      <<: *mysql-environment
+      MYSQL_DATABASE: cart
+    volumes:
+      - cart-data:/var/lib/mysql
+      - ./.backend/schema/cart.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+
+  orders-db:
+    <<: *mysql
+    environment:
+      <<: *mysql-environment
+      MYSQL_DATABASE: orders
+    volumes:
+      - orders-data:/var/lib/mysql
+      - ./.backend/schema/orders.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  users-api:
+    <<: *api
+    environment:
+      <<: *api-environment
+      SERVICE_NAME: users
+      DB_HOST: users-db
+      DB_NAME: users
+    depends_on:
+      users-db:
+        condition: service_healthy
+
+  catalog-api:
+    <<: *api
+    environment:
+      <<: *api-environment
+      SERVICE_NAME: catalog
+      DB_HOST: catalog-db
+      DB_NAME: catalog
+      REDIS_URL: redis://redis:6379
+      CACHE_TTL_SECONDS: ${CACHE_TTL_SECONDS:-60}
+      EVENT_SIGNING_SECRET: ${EVENT_SIGNING_SECRET:?Set EVENT_SIGNING_SECRET in .env}
+    volumes:
+      - uploads-data:/app/uploads
+    depends_on:
+      catalog-db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  cart-api:
+    <<: *api
+    environment:
+      <<: *api-environment
+      SERVICE_NAME: cart
+      DB_HOST: cart-db
+      DB_NAME: cart
+    depends_on:
+      cart-db:
+        condition: service_healthy
+
+  orders-api:
+    <<: *api
+    environment:
+      <<: *api-environment
+      SERVICE_NAME: orders
+      DB_HOST: orders-db
+      DB_NAME: orders
+    depends_on:
+      orders-db:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:stable-alpine
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      users-api:
+        condition: service_healthy
+      catalog-api:
+        condition: service_healthy
+      cart-api:
+        condition: service_healthy
+      orders-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  users-data:
+  catalog-data:
+  cart-data:
+  orders-data:
+  redis-data:
+  uploads-data:

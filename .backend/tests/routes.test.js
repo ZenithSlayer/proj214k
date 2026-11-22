@@ -2,7 +2,6 @@ const request = require("supertest");
 const app = require("../app");
 const db = require("../db");
 
-// Test Data Constants
 const uniqueId = Date.now();
 const userEmail = `user${uniqueId}@test.com`;
 const userPassword = "Password123!";
@@ -24,9 +23,11 @@ describe("Comprehensive API Integration Suite", () => {
 
     it("2. Should successfully register a valid user", async () => {
       const res = await request(app).post("/users/register").send({
-        name: "Test User", email: userEmail, password: userPassword, cpf: userCPF
+        name: "Test User", email: userEmail, password: userPassword, cpf: userCPF, is_admin: true
       });
       expect(res.statusCode).toBe(201);
+      const payload = JSON.parse(Buffer.from(res.body.token.split(".")[1], "base64url").toString());
+      expect(payload.is_admin).toBe(false);
     });
 
     it("3. Should prevent duplicate email registration", async () => {
@@ -115,7 +116,7 @@ describe("Comprehensive API Integration Suite", () => {
 
     it("16. Should fail deleting a non-existent address", async () => {
       const res = await request(app).delete("/users/address/99999").set("Authorization", `Bearer ${authToken}`);
-      expect(res.statusCode).toBe(200); // Controller returns 200 even if empty in your code
+      expect(res.statusCode).toBe(200);
     });
   });
 
@@ -140,7 +141,7 @@ describe("Comprehensive API Integration Suite", () => {
     it("20. Should fail to add card with invalid date format", async () => {
       const res = await request(app).post("/users/card").set("Authorization", `Bearer ${authToken}`)
         .send({ card_number: "123", security_code: "1", expiration_date: "invalid" });
-      expect(res.statusCode).toBe(500); // SQL Error
+      expect(res.statusCode).toBe(500);
     });
 
     it("21. Should delete a card", async () => {
@@ -190,12 +191,17 @@ describe("Comprehensive API Integration Suite", () => {
     it("28. Should fail to update profile with missing email", async () => {
       const res = await request(app).put("/users/profile").set("Authorization", `Bearer ${authToken}`)
         .send({ name: "OnlyName" });
-      expect(res.statusCode).toBe(500); // SQL constraint error
+      expect(res.statusCode).toBe(500);
     });
 
     it("29. Should delete user account successfully", async () => {
       const res = await request(app).delete("/users").set("Authorization", `Bearer ${authToken}`);
       expect(res.statusCode).toBe(200);
+    });
+
+    it("should no longer return the deleted account", async () => {
+      const res = await request(app).get("/users/me").set("Authorization", `Bearer ${authToken}`);
+      expect(res.statusCode).toBe(404);
     });
 
     it("30. Should no longer be able to login after deletion", async () => {

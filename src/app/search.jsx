@@ -4,7 +4,7 @@ import { useAppTheme } from "../context/ThemeContext";
 import { productsApi } from "../services/products";
 import StorePage from "./store";
 
-const search = () => {
+const Search = () => {
   const { theme } = useAppTheme();
   const [tags, setTags] = useState([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
@@ -36,7 +36,6 @@ const search = () => {
           clearButtonMode="while-editing"
         />
 
-        {/* Horizontal Tag Filters */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
           <View style={{ flexDirection: "row", gap: 8 }}>
             <Pressable
@@ -85,4 +84,4 @@ const styles = StyleSheet.create({
   searchInput: { height: 46, marginBottom: 16, paddingHorizontal: 14, borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 8, backgroundColor: "#fff", color: "#0f172a", fontSize: 16 },
 });
 
-export default search;
+export default Search;

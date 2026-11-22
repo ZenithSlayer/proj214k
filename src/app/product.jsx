@@ -2,20 +2,28 @@ import { useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from "react-native";
 import placeHolder from "../assets/placeHolder.png";
-import ItemRow from "../components/ItemRow";
 import { useAppTheme } from "../context/ThemeContext";
 import { productsApi } from "../services/products";
 
-const product = ({ id, onAddToCart, setToast }) => {
+const Product = ({ id, onAddToCart, setToast }) => {
   const navigation = useNavigation();
   const { theme } = useAppTheme();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [quantity, setQuantity] = useState(1);
+  const [quantityState, setQuantityState] = useState({ id, value: 1 });
+  const quantity = quantityState.id === id ? quantityState.value : 1;
+  const updateQuantity = (update) => {
+    setQuantityState((current) => {
+      const currentValue = current.id === id ? current.value : 1;
+      return {
+        id,
+        value: typeof update === "function" ? update(currentValue) : update,
+      };
+    });
+  };
 
   useEffect(() => {
-    setQuantity(1);
     const fetchProduct = async () => {
       setLoading(true);
       try {
@@ -71,10 +79,9 @@ const product = ({ id, onAddToCart, setToast }) => {
           ${Number(product?.price || 0).toFixed(2)}
         </Text>
 
-        {/* Quantity Controls */}
         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
           <Pressable
-            onPress={() => setQuantity((q) => Math.max(1, q - 1))}
+            onPress={() => updateQuantity((q) => Math.max(1, q - 1))}
             style={{ backgroundColor: "#e5e7eb", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 6 }}
           >
             <Text style={{ fontSize: 18, fontWeight: "bold" }}>-</Text>
@@ -83,14 +90,13 @@ const product = ({ id, onAddToCart, setToast }) => {
           <Text style={{ marginHorizontal: 20, fontSize: 18, fontWeight: "600", color: theme.text }}>{quantity}</Text>
 
           <Pressable
-            onPress={() => setQuantity((q) => q + 1)}
+            onPress={() => updateQuantity((q) => q + 1)}
             style={{ backgroundColor: "#e5e7eb", paddingHorizontal: 16, paddingVertical: 8, borderRadius: 6 }}
           >
             <Text style={{ fontSize: 18, fontWeight: "bold" }}>+</Text>
           </Pressable>
         </View>
 
-        {/* Add to Cart Button */}
         <Pressable
           onPress={() => {
             onAddToCart?.(product, quantity);
@@ -104,7 +110,6 @@ const product = ({ id, onAddToCart, setToast }) => {
           <Text style={{ color: theme.surface, fontSize: 16, fontWeight: "bold" }}>Add to Cart</Text>
         </Pressable>
 
-        {/* Categories */}
         {parsedCategories.length > 0 && (
           <View style={{ marginBottom: 24 }}>
             <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 8 }}>Categories</Text>
@@ -117,11 +122,9 @@ const product = ({ id, onAddToCart, setToast }) => {
             </View>
           </View>
         )}
-
-        <ItemRow offset={0} />
       </View>
     </ScrollView>
   );
 };
 
-export default product;
+export default Product;

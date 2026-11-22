@@ -2,7 +2,7 @@ import { FontAwesome } from "@expo/vector-icons";
 import { useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { useAppTheme } from "../../../context/ThemeContext";
-import { api } from "../../../services/api";
+import { api } from "../../../services/client";
 import DateInput from "./DateInput";
 import { createPanelStyles } from "./panelStyles";
 

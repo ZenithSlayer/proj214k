@@ -69,12 +69,16 @@ flowchart LR
     E --> R[Expo Router]
     R --> C[Componentes e Contextos]
     C --> S[Services / API Client]
-    S -->|HTTP + JWT| B[Express Backend]
+    S -->|HTTP + JWT| N[Nginx]
+    N --> B[Express Backend]
     B --> M[Middleware de autenticação]
     B --> CT[Controllers]
     CT --> DB[(MySQL / MariaDB)]
+    CT -. cache-aside / eventos assinados .-> R[(Redis)]
     B --> FS[(uploads/)]
 ```
+
+Os endpoints públicos do catálogo usam cache-aside no Redis (TTL padrão de 60 segundos); alterações de produtos/categorias incrementam a versão do catálogo. Redis não é fonte da verdade: em falhas, as leituras do catálogo seguem pelo MySQL. Eventos de ciclo de vida são publicados via Pub/Sub com assinatura HMAC. Veja [architecture.md](./architecture.md), [openapi.yaml](./openapi.yaml) e [operations.md](./operations.md).
 
 ### Camadas
 
@@ -87,6 +91,8 @@ flowchart LR
 | `src/constants` | Tokens de tema, fontes e espaçamentos. |
 | `.backend/routes` | Definição dos endpoints HTTP. |
 | `.backend/controllers` | Regras de negócio e acesso aos dados. |
+| `.backend/dto` | Whitelist dos campos de entrada aceitos em operações de produto. |
+| `.backend/services/catalog.js` | Serviço de cache Redis, invalidação e publicação/consumo de eventos. |
 | `.backend/middleware` | Autenticação JWT e upload Multer. |
 | `.backend/Script.sql` | Modelo relacional do banco. |
 
@@ -389,7 +395,7 @@ sequenceDiagram
 
 - Criar testes automatizados específicos para rejeição de GIF, assinatura inválida, tamanho excedido e duplicidade de imagem.
 - Adicionar uma tabela de metadados de arquivos, caso o volume de uploads cresça e a varredura do diretório deixe de ser suficiente.
-- Aplicar autorização explícita de administrador no middleware de produtos, além da autenticação JWT.
+- Integrar um provedor de pagamentos para substituir o armazenamento direto de dados de cartão antes de qualquer uso real.
 - Separar configurações de desenvolvimento e produção, principalmente URL da API, CORS e armazenamento de imagens.
 - Considerar armazenamento de objetos, como S3 ou serviço equivalente, para produção.
 - Manter a documentação atualizada a cada mudança de fluxo ou entidade.

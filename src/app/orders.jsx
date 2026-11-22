@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, ScrollView, Text, View } from "react-native";
-import { api } from "../services/api";
+import { api } from "../services/client";
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
@@ -19,7 +19,7 @@ export default function Orders() {
   return (
     <ScrollView contentContainerStyle={{ padding: 16 }}>
       {error ? <Text style={{ color: "#dc2626" }}>{error}</Text> : null}
-      {!error && orders.length === 0 ? <Text>You haven't placed any orders yet.</Text> : null}
+      {!error && orders.length === 0 ? <Text>You have not placed any orders yet.</Text> : null}
       {orders.map((order) => (
         <View key={order.id} style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: "#e5e7eb" }}>
           <Text style={{ fontWeight: "700" }}>Order #{order.id}</Text>

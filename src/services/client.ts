@@ -1,9 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.0.241:3001";
+const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://192.168.0.241:8080";
 
-const redirectToAuth = async (reason?: string) => {
+const redirectToAuth = async () => {
   try {
     const token = await AsyncStorage.getItem("token");
     if (token) {
@@ -11,13 +11,13 @@ const redirectToAuth = async (reason?: string) => {
       await AsyncStorage.removeItem("user");
     }
   } catch (error) {
-    // ignore storage cleanup issues while redirecting
+    console.error("Could not clear the expired session:", error);
   }
 
   try {
     router.replace("/auth");
   } catch (error) {
-    // ignore navigation issues in non-router contexts
+    console.error("Could not navigate to authentication:", error);
   }
 };
 
@@ -34,7 +34,7 @@ const normalizeError = async (response: Response) => {
   const message = errorData.message || errorData.error || `Request failed with status ${response.status}`;
 
   if (["No token provided", "Invalid token", "Token expired", "Unauthorized"].some((value) => message.toLowerCase().includes(value.toLowerCase()))) {
-    await redirectToAuth(message);
+    await redirectToAuth();
   }
 
   return new Error(message);
@@ -78,15 +78,16 @@ export const upload = async (path: string, file: any) => {
 
 export const api = {
   get: (path: string) => request(path, { method: "GET" }),
-  post: (path: string, body: any) =>
+  post: (path: string, body?: unknown) =>
     request(path, {
       method: "POST",
-      body: JSON.stringify(body),
+      body: body === undefined ? undefined : JSON.stringify(body),
     }),
-  put: (path: string, body: any) =>
+  put: (path: string, body?: unknown) =>
     request(path, {
       method: "PUT",
-      body: JSON.stringify(body),
+      body: body === undefined ? undefined : JSON.stringify(body),
     }),
   delete: (path: string) => request(path, { method: "DELETE" }),
+  upload: (path: string, file: any) => upload(path, file),
 };

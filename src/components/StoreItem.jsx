@@ -10,7 +10,7 @@ const StoreItem = ({ item }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   const handlePress = () => {
-    router.replace(`/product/${item.id}`);
+    router.push(`/product/${item.id}`);
   };
 
   const imageSource = item?.image_url ? { uri: item.image_url } : placeHolder;
@@ -18,6 +18,8 @@ const StoreItem = ({ item }) => {
   return (
     <Pressable
       onPress={handlePress}
+      accessibilityRole="button"
+      accessibilityLabel={`View ${item?.name}`}
       onHoverIn={() => setIsHovered(true)}
       onHoverOut={() => setIsHovered(false)}
       style={({ pressed }) => [
@@ -37,29 +39,21 @@ const StoreItem = ({ item }) => {
         {item?.name}
       </Text>
 
-      {/* <Text style={[styles.description, { color: theme.textSecondary }]} numberOfLines={2}>
-        {item?.description}
-      </Text>
-
       <Text style={[styles.price, { color: theme.accent }]}>
         ${item?.price ? Number(item.price).toFixed(2) : "0.00"}
       </Text>
-
-      <View style={[styles.button, { backgroundColor: theme.accent }]}>
-        <Text style={[styles.buttonText, { color: theme.surface }]}>View Details</Text>
-      </View> */}
     </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    flex: 1,
-    maxWidth: 350,
+    width: "100%",
     backgroundColor: "#ffffff",
     borderRadius: 8,
-    padding: 5,
+    padding: 10,
     alignItems: "center",
+    alignSelf: "stretch",
     elevation: 3,
     shadowColor: "#000000",
     shadowOffset: { width: 0, height: 2 },
@@ -78,7 +72,6 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     width: "100%",
-    maxWidth: 200,
     aspectRatio: 1,
     overflow: "hidden",
     padding: 5,
@@ -91,34 +84,16 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 13,
     fontWeight: "bold",
-    color: "#1f2937",
     marginTop: 10,
-    marginBottom: 5,
+    marginBottom: 4,
     textAlign: "center",
-  },
-  description: {
-    fontSize: 14,
-    color: "#555555",
-    textAlign: "center",
-    marginBottom: 10,
+    width: "100%",
   },
   price: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#ff6f61",
-    marginVertical: 10,
-  },
-  button: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: "#ff6f61",
-    borderRadius: 5,
-    marginTop: 5,
-  },
-  buttonText: {
-    color: "#ffffff",
-    fontWeight: "600",
-    fontSize: 14,
+    marginTop: 4,
+    marginBottom: 6,
   },
 });
 

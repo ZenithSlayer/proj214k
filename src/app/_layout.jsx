@@ -1,4 +1,3 @@
-import 'react-native-gesture-handler';
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { usePathname, useRouter } from "expo-router";
@@ -6,7 +5,6 @@ import { Drawer, DrawerContentScrollView, DrawerItem } from "expo-router/drawer"
 import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import Footer from "../components/Footer";
 import Header from "../components/Header";
 import { CartProvider } from "../context/CartContext";
 import { ThemeProvider, useAppTheme } from "../context/ThemeContext";
@@ -22,13 +20,19 @@ function AppDrawerContent(props) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const { theme } = useAppTheme();
 
-  const refreshAuthState = async () => {
-    const token = await AsyncStorage.getItem("token");
-    setIsLoggedIn(Boolean(token));
-  };
-
   useEffect(() => {
-    refreshAuthState();
+    let active = true;
+    AsyncStorage.getItem("token")
+      .then((token) => {
+        if (active) setIsLoggedIn(Boolean(token));
+      })
+      .catch((error) => {
+        console.error("Could not load authentication state:", error);
+        if (active) setIsLoggedIn(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [pathname]);
 
   const items = [
@@ -100,7 +104,7 @@ function LayoutContent() {
               drawerStyle: { backgroundColor: theme.drawer, width: 280 },
             }}
           >
-            <Drawer.Screen name="index" options={{ drawerLabel: "Home Store", title: "Store Overview" }} />
+            <Drawer.Screen name="index" options={{ drawerLabel: "Store", title: "Store" }} />
             <Drawer.Screen name="cart" options={{ drawerLabel: "Shopping Cart", title: "My Cart" }} />
             <Drawer.Screen name="orders" options={{ drawerLabel: "My Orders", title: "Order History" }} />
           </Drawer>

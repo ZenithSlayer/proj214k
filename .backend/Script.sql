@@ -99,6 +99,7 @@ CREATE TABLE order_items (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   order_id BIGINT UNSIGNED NOT NULL,
   product_id BIGINT UNSIGNED NOT NULL,
+  product_name VARCHAR(255) NOT NULL,
   quantity INT NOT NULL,
   price DECIMAL(10,2) NOT NULL,
   CONSTRAINT oi_order_id_foreign FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
@@ -111,6 +112,8 @@ CREATE TABLE cart (
   product_id BIGINT UNSIGNED NOT NULL,
   quantity INT NOT NULL DEFAULT 1,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY cart_user_product_unique (user_id, product_id),
+  CONSTRAINT cart_quantity_positive CHECK (quantity > 0),
   CONSTRAINT cart_user_id_foreign FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   CONSTRAINT cart_product_id_foreign FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );

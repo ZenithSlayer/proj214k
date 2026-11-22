@@ -52,7 +52,7 @@ export const AddressPanel = ({ data, setData, setToast }) => {
         )
       }));
       setToast?.({ message: "Favorite address updated", type: "success" });
-    } catch (err) {
+    } catch {
       setToast?.({ message: "Failed to update favorite", type: "error" });
     }
   };
@@ -74,7 +74,7 @@ export const AddressPanel = ({ data, setData, setToast }) => {
                 addresses: prev.addresses.filter(a => a && a.id !== id)
               }));
               setToast?.({ message: "Address deleted", type: "success" });
-            } catch (err) {
+            } catch {
               setToast?.({ message: "Error deleting address", type: "error" });
             }
           }

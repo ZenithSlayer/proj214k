@@ -4,6 +4,17 @@
 
 A documentação funcional e técnica do produto, incluindo evolução, requisitos e diagramas, está disponível em [docs/documentacao-produto.md](docs/documentacao-produto.md).
 
+## Arquitetura e operação
+
+- [Índice da documentação](docs/README.md)
+- [Compose local](docker-compose.yml): copie `.env.example` para `.env`, substitua os valores locais e execute `docker compose up --build`. Nginx routes the API to Users, Catalog, Cart, and Orders services, each with its own MySQL database.
+
+Set `EXPO_PUBLIC_API_URL` in `.env` to the Nginx host/port reachable from the Expo runtime (the example uses a LAN address on port 8080). The service schemas are initialized on fresh Docker volumes. Existing data in the previous shared database is not migrated automatically; back up and export/import it before switching a populated deployment to this Compose setup. Do not remove persistent volumes to troubleshoot an existing deployment.
+
+To restore catalog data from the previous MySQL database, start the Compose stack and run `npm --prefix .backend run migrate:catalog`. The migration reads `LEGACY_DB_HOST`, `LEGACY_DB_PORT`, `LEGACY_DB_USER`, `LEGACY_DB_PASSWORD`, and `LEGACY_DB_NAME` (defaults target a local legacy MySQL database named `projeto22026`) and writes through the local Catalog database port `CATALOG_DB_PORT` (default `3307`). It copies products, categories, and category links without clearing either database. Back up the source and verify the counts before and after migration.
+
+O deploy de produção é manual por GitHub Actions e requer o ambiente `production`, os segredos SSH documentados no workflow e uma cópia configurada do repositório em `/opt/proj214k` no host.
+
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
 ## Get started

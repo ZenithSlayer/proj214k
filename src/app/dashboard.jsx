@@ -11,7 +11,7 @@ import Toast from "../components/Toast";
 import { useAppTheme } from "../context/ThemeContext";
 import { useDashboardData } from "../hooks/useDashboardData";
 
-const dashboard = ({ setToast }) => {
+const Dashboard = ({ setToast }) => {
   const router = useRouter();
   const { theme } = useAppTheme();
   const { data, setData, loading } = useDashboardData(setToast);
@@ -89,10 +89,8 @@ const styles = StyleSheet.create({
   heading: { color: "#0f172a", backgroundColor: "#f8fafc", textAlign: "center", fontSize: 26, fontWeight: "700", padding: 18, borderTopLeftRadius: 12, borderTopRightRadius: 12 },
   tabs: { gap: 4, paddingTop: 16, alignItems: "flex-end" },
   tab: { backgroundColor: "#1e293b", paddingVertical: 12, paddingHorizontal: 18, borderTopLeftRadius: 8, borderTopRightRadius: 8, borderBottomWidth: 3, borderBottomColor: "transparent" },
-  activeTab: { borderBottomColor: "#ef4444" },
   tabText: { color: "#94a3b8", fontSize: 12, fontWeight: "700", letterSpacing: 0.5 },
-  activeTabText: { color: "#ffffff" },
   panel: { minHeight: 400, backgroundColor: "#1e293b", padding: 24, borderRadius: 12, shadowColor: "#000", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 16, elevation: 5 },
 });
 
-export default dashboard;
+export default Dashboard;
